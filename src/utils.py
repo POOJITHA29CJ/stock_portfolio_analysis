@@ -58,16 +58,17 @@ def compute_profit_loss(state):
 
 def tool_web_search_top_stocks():
     """
-        Uses Tavily Search API to identify top 3 performing stocks today.
+        Uses Tavily Search API to identify top 3 performing stocks  .
     """
     tavily_client=TavilyClient("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")
     query="""
-    List the top performing / top gaining 3 stocks yesterday.
-    Include their tickers clearly in the text.
+    List the top performing stocks in the current week .
+    Include their tickers clearly in the text .
     """
     result = tavily_client.search(query, max_results=1,domains=["finance.yahoo.com"])
     content = result["results"][0]["content"]
     return content
+
 
 
 

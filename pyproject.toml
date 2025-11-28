@@ -1,0 +1,23 @@
+[project]
+name = "finance"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "agno>=2.2.13",
+    "fastapi>=0.121.3",
+    "ipython>=9.7.0",
+    "langchain>=1.0.8",
+    "langchain-core>=1.1.0",
+    "langchain-google-genai>=3.1.0",
+    "langchain-huggingface>=1.0.1",
+    "langgraph>=1.0.3",
+    "langmem>=0.0.30",
+    "openai>=2.8.1",
+    "sentence-transformers>=5.1.2",
+    "streamlit>=1.51.0",
+    "tavily-python>=0.7.13",
+    "uvicorn>=0.38.0",
+    "yfinance>=0.2.66",
+]

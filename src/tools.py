@@ -3,7 +3,7 @@ from langchain_core.tools import tool
 from typing import List,Dict,Optional
 from datetime import datetime,timedelta
 import math
-
+import pandas as pd
 @tool
 def get_current_stock_prices(tickers:List[str])->Dict[str,Optional[float]]:
     """
@@ -73,4 +73,29 @@ def calculate_quantities(prices:dict,capital:float):
     return result
 
 
+@tool
+def get_stock_fundamentals(ticker: str) -> dict:
+    """
+    Fetch key financial fundamentals for any stock ticker using yfinance.
+    Used to justify HOLD/SELL and BUY recommendations.
+    """
+    stock = yf.Ticker(ticker)
+    info = stock.info
 
+    fundamentals = {
+        "current_price": info.get("currentPrice"),
+        "market_cap": info.get("marketCap"),
+        "pe_ratio": info.get("trailingPE"),
+        "book_value": info.get("bookValue"),
+        "dividend_yield": info.get("dividendYield"),
+        "roe": info.get("returnOnEquity"),
+        "roa": info.get("returnOnAssets"),
+        "profit_margins": info.get("profitMargins"),
+        "operating_margins": info.get("operatingMargins"),
+        "gross_margins": info.get("grossMargins"),
+        "52_week_high": info.get("fiftyTwoWeekHigh"),
+        "52_week_low": info.get("fiftyTwoWeekLow"),
+        "beta": info.get("beta"),
+        "debt_to_equity": info.get("debtToEquity"),
+    }
+    return fundamentals

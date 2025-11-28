@@ -9,7 +9,7 @@ import json
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph,END,START
 from langgraph.types import Interrupt,Command
-from src.tools import get_purchased_price,get_current_stock_prices,calculate_quantities
+from src.tools import get_purchased_price,get_current_stock_prices,calculate_quantities,get_stock_fundamentals
 from src.utils import compute_portfolio_values,compute_profit_loss,tool_web_search_top_stocks
 import uuid
 
@@ -31,7 +31,6 @@ store = InMemoryStore(
 manage_memory = create_manage_memory_tool(namespace=("memories",), store=store)
 search_memory = create_search_memory_tool(namespace=("memories",), store=store)
 
-
 class AgentState(TypedDict,total=False):
     question: str
     quantities:Optional[Dict[str, float]]
@@ -48,6 +47,7 @@ class AgentState(TypedDict,total=False):
     need_recommendation_confirmation: Optional[str]
     quantities_can_be_bought: Optional[Dict[str, float]]
     final_report: Optional[str]
+    fundamentals: Optional[Dict[str, dict]]
 
 
 def input_agent(state: AgentState):
@@ -238,6 +238,17 @@ def recommendation_agent(state: AgentState):
     #print(state)
     return state
 def output_formatting_agent(state:AgentState):
+    fundamentals = {}
+    if state.get("recommendation") == "no":
+        tickers = list(state.get("quantities", {}).keys())
+    else:
+        tickers = list(state.get("quantities_can_be_bought", {}).keys())
+    for ticker in tickers:
+        try:
+            fundamentals[ticker] = get_stock_fundamentals.func(ticker)
+        except Exception as e:
+            fundamentals[ticker] = {"error": str(e)}
+    state["fundamentals"] = fundamentals
     recommendation_path=state["recommendation"]
     mem_response = search_memory.invoke({
         "query": "reinvestment_capital",
@@ -248,13 +259,25 @@ def output_formatting_agent(state:AgentState):
     contents = [item["value"]["content"] for item in parsed]
     #print("contents : ", contents)
     memory_text = contents
-    prompt=f"""
-    {OUTPUT_FORMATTING_AGENT_PROMPT}
-    ## Report:
-    {state}
-    ## Recommendation state : {recommendation_path}
-    ## Memory Context : {memory_text}
-    """
+    print("state",state)
+    prompt = f"""
+        {OUTPUT_FORMATTING_AGENT_PROMPT}
+        ## Stock Analysis:
+        {state.get("stock_analysis")}
+        ## Fundamentals:
+        {state.get("fundamentals")}
+        ## Portfolio Analysis:
+        {state.get("portfolio_analysis")}
+        ## Quantities:
+        {state.get("quantities")}
+        ## Quantities Can Be Bought:
+        {state.get("quantities_can_be_bought")}
+        ## Recommendation state:
+        {recommendation_path}
+        ## Memory Context:
+        {memory_text}
+        ## Final state: {state}
+        """
     #print("in output agent")
     response=llm.invoke([HumanMessage(content=prompt)])
     state["final_report"]=response.content
